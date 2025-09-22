@@ -1,5 +1,5 @@
 // src/models/berita.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface ILaporan extends Document {
   judul: string;
@@ -11,6 +11,10 @@ export interface ILaporan extends Document {
   gmapsLink: string;
   gambarType?: string;
   createdAt: Date;
+  updatedAt: Date;
+  status: "unread" | "pending" | "done"; // ENUM / String
+  isDeleted: Boolean; // optional: untuk soft delete
+  createdBy: Types.ObjectId;
 }
 
 const ReportSchema = new Schema<ILaporan>({
@@ -23,6 +27,10 @@ const ReportSchema = new Schema<ILaporan>({
   gmapsLink: { type: String, required: true },
   gambarType: { type: String },
   createdAt: { type: Date, default: Date.now },
+  status: { type: String, enum: ["unread", "pending", "done"], required: true },
+  updatedAt: { type: Date, required: true },
+  isDeleted: { type: Boolean, required: true },
+  createdBy: { type: Schema.Types.ObjectId, ref: "user", requirerd: true },
 });
 
 const Report =

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CardReport, CardReportProps } from "@/components/cardreport";
+import { CardReport, CardReportProps } from "@/components/card/cardreport";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 

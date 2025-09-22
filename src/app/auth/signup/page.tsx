@@ -78,21 +78,25 @@ export default function SigninPage() {
             id="password"
             name="password"
             type="password"
+            autoComplete="current-password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             placeholder="Password"
             className="focus:text-accent-foreground text-accent-foreground placeholder-accent-foreground w-full rounded-lg border border-zinc-300 px-6 py-3 text-base focus:border-transparent focus:placeholder-black focus:ring-2 focus:ring-[#2e2acb] focus:outline-none"
             required
           />
-          {/*
-<input
-  id="No_HP"
-  name="No_HP"
-  type="telephone"
-  placeholder="Nomor HP"
-  className="focus:text-accent-foreground text-accent-foreground placeholder-accent-foreground w-full rounded-lg border border-zinc-300 px-6 py-3 text-base focus:border-transparent focus:placeholder-black focus:ring-2 focus:ring-[#2e2acb] focus:outline-none"
-/>
-*/}
+
+          <input
+            id="phonenumber"
+            name="phonenumber"
+            type="tel"
+            value={form.phonenumber}
+            onChange={(e) => setForm({ ...form, phonenumber: e.target.value })}
+            placeholder="Nomor HP"
+            className="focus:text-accent-foreground text-accent-foreground placeholder-accent-foreground w-full rounded-lg border border-zinc-300 px-6 py-3 text-base focus:border-transparent focus:placeholder-black focus:ring-2 focus:ring-[#2e2acb] focus:outline-none"
+            required
+          />
+
           <p className="text-accent-foreground w-full text-right text-sm">
             Belum punya akun ?
             <Link

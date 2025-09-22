@@ -1,40 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CardNews, CardNewsProps } from "@/components/cardnews";
+import { CardNews, CardNewsProps } from "@/components/card/cardnews";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 interface UserProps {
   params: { role: string };
 }
 
 const DashboardNews: React.FC<UserProps> = ({ params }) => {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useAuth();
   const [newsData, setNewsData] = useState<CardNewsProps[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
   useEffect(() => {
-    async function fetchUser() {
-      const res = await fetch("/api/auth/me", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        router.push("/auth/login");
-      }
-    }
-    fetchUser();
-  }, [router]);
-
-  useEffect(() => {
-    // fetch berita
     async function fetchNews() {
       try {
         const res = await fetch("/api/news");
@@ -51,7 +32,8 @@ const DashboardNews: React.FC<UserProps> = ({ params }) => {
     fetchNews();
   }, []);
 
-  if (!user)
+  // 1. Kalau masih loading user
+  if (loading) {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-1">
         <h1 className="text-accent-foreground text-2xl font-bold">
@@ -60,7 +42,23 @@ const DashboardNews: React.FC<UserProps> = ({ params }) => {
         <p className="text-accent-foreground text-base">Mohon tunggu</p>
       </div>
     );
+  }
 
+  // 2. Kalau sudah selesai loading tapi user tidak ada
+  if (!user) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center gap-1">
+        <h1 className="text-accent-foreground text-2xl font-bold">
+          Anda belum login
+        </h1>
+        <p className="text-accent-foreground text-base">
+          Silakan login untuk melanjutkan
+        </p>
+      </div>
+    );
+  }
+
+  // 3. Kalau user ada
   return (
     <div className="flex h-auto w-full flex-col gap-4 p-4">
       <h1 className="text-xl font-bold">
@@ -79,9 +77,11 @@ const DashboardNews: React.FC<UserProps> = ({ params }) => {
         </Link>
       </div>
       <div className="mt-6 flex h-fit w-full flex-col gap-4">
-        {newsData.map((news, i) => (
-          <CardNews key={i} {...news} />
-        ))}
+        {loadingNews ? (
+          <p>Sedang memuat berita...</p>
+        ) : (
+          newsData.map((news, i) => <CardNews key={i} {...news} />)
+        )}
       </div>
     </div>
   );

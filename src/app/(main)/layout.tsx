@@ -25,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const data = await getAuthData();
+  const user = await getAuthData();
 
   const serverTime = new Date().toISOString();
 
@@ -38,12 +38,12 @@ export default async function RootLayout({
         disableTransitionOnChange
       >
         <SidebarProvider>
-          {data?.user ? (
+          {user?.user ? (
             <>
-              <AppSidebar role={data.user.role} />
+              <AppSidebar role={user.user.role} />
               <main className="relative w-full overflow-hidden">
-                <div className="flex flex-row items-center-safe justify-between">
-                  <SidebarTrigger />
+                <SidebarTrigger className="bg-background fixed z-30 mt-1 rounded-l-none" />
+                <div className="flex flex-row justify-end-safe">
                   <ClockClient serverTime={serverTime} />
                 </div>
 

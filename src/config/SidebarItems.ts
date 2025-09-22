@@ -34,6 +34,7 @@ export const sidebarItems: Record<string, SidebarItem[]> = {
     { title: "Berita Desa", url: "/admin/news", icon: NewspaperIcon },
     { title: "Laporan", url: "/admin/report", icon: ClipboardMinus },
     { title: "Forum Diskusi", url: "/admin/forum", icon: MessagesSquareIcon },
+    { title: "E-Gov", url: "/admin/e-gov", icon: Landmark },
     {
       title: "Panduan",
       icon: BookText,

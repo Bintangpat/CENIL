@@ -1,48 +1,63 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
   name: string;
   role: string;
+  email: string;
 }
 
 interface AuthContextProps {
   user: User | null;
   loading: boolean;
   setUser: (user: User | null) => void;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({
+  children,
+  initialUser,
+}: {
+  children: React.ReactNode;
+  initialUser?: User | null;
+}) => {
+  const [user, setUser] = useState<User | null>(initialUser ?? null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
-        console.error("Auth fetch error:", err);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+      router.push("/");
+    } catch (err) {
+      console.error("Gagal logout", err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchUser();
-  }, []);
+  const refresh = async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Access token diperbarui:", data.accessToken);
+      }
+    } catch (err) {
+      console.error("Gagal refresh token", err);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser }}>
+    <AuthContext.Provider value={{ user, loading, setUser, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

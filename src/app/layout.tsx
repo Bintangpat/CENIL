@@ -1,15 +1,22 @@
+// src/app/layout.tsx
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
-import { cookies } from "next/headers";
+import { Geist } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getAuthData } from "@/lib/auth";
 import { AuthProvider } from "@/context/AuthContext";
 import Base0 from "@/components/base0";
-import NavabarLayout from "@/components/navbar";
+import Navabar from "@/components/navbar";
+import ReactQueryProvider from "@/provider/ReactQueryProvider";
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
+  subsets: ["latin"],
+});
+
+const Geistfallback = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
@@ -20,25 +27,20 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const data = await getAuthData();
+}) {
+  const { user } = await getAuthData();
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${interTight.variable} ${interTight.className} flex flex-col antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+      <body className={`${Geistfallback.className} flex flex-col antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Base0>
-            <NavabarLayout />
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider initialUser={user}>
+              <Navabar />
+              <ReactQueryProvider>{children}</ReactQueryProvider>
+            </AuthProvider>
           </Base0>
         </ThemeProvider>
       </body>

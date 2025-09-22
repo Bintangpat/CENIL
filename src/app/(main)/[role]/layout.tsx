@@ -15,10 +15,10 @@ export default async function RoleLayout({
   params: Promise<LayoutParams>;
 }) {
   const resolvedParams = await params;
-  const data = await getAuthData();
+  const user = await getAuthData();
 
   // Jika gagal autentikasi
-  if (!data?.user) {
+  if (!user?.user) {
     return (
       <UnauthorizedLayout
         code="401"
@@ -28,7 +28,7 @@ export default async function RoleLayout({
     );
   }
 
-  const userRole = data.user.role; // role dari JWT / API
+  const userRole = user.user.role; // role dari JWT / API
   const routeRole = resolvedParams?.role; // role dari URL
 
   // Cocokkan role user dengan role di URL

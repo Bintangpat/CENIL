@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +35,7 @@ export default function LoginPage() {
       }
 
       // Jika respons sukses, lakukan navigasi
+      setUser(data.user);
       const role = data.user?.role || "user";
       router.push(`/${role}/dashboard`);
       router.refresh();

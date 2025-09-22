@@ -66,7 +66,7 @@ const Carousel: FC<CarouselWelcomeProps> = ({ className }) => {
               alt={`Deskripsi gambar ${index + 1}`}
               className="h-full w-full object-cover"
             />
-            <div className="absolute inset-1 top-1/2 left-32 flex h-fit flex-col gap-6 text-white transition-transform duration-700 md:left-32">
+            <div className="transition-al absolute inset-1 top-3/5 left-2 flex h-fit flex-col gap-6 text-white duration-700 ease-out md:top-1/2 md:left-32">
               <h5 className="animate-fade-in-up font-Intertight z-3 h-fit cursor-pointer text-left text-2xl font-bold md:text-3xl lg:text-4xl">
                 {Headers[index]}
               </h5>

@@ -16,7 +16,8 @@ export async function getAuthData() {
       return { user: null, error: res.status };
     }
 
-    return await res.json();
+    const data = await res.json();
+    return { user: data.user ?? null, error: null };
   } catch (error) {
     console.error("Auth data fetch error:", error);
     return { user: null, error: 500 };

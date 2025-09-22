@@ -27,7 +27,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/UserContext.jsx"
+    "src/UserContext.jsx",
+    "server/src/index.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/user";
 import { cookies } from "next/headers";
 import { comparePassword, signJWT } from "@/lib/utils";
+import { cookieOptions } from "@/lib/CookieOptions";
 
 export async function POST(req: Request) {
   try {
@@ -56,9 +57,7 @@ export async function POST(req: Request) {
     );
 
     response.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
+      ...cookieOptions,
       maxAge: 60 * 60 * 24, // 1 hari
     });
 

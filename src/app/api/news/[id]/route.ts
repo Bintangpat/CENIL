@@ -4,11 +4,13 @@ import News from "@/models/news";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    const berita = await News.findById(params.id);
+
+    const { id } = await context.params; // ✅ tunggu params
+    const berita = await News.findById(id);
 
     if (!berita) {
       return NextResponse.json(
@@ -17,11 +19,11 @@ export async function GET(
       );
     }
 
+    // findById hasilnya cuma 1 dokumen, bukan array
     const beritaWithImage = {
       ...berita.toObject(),
-      gambar: berita.gambar
-        ? `data:${berita.gambarType};base64,${berita.gambar.toString("base64")}`
-        : null,
+      gambar: berita.gambar ? berita.gambar : null,
+      gambarType: berita.gambarType || null,
     };
 
     return NextResponse.json(beritaWithImage, { status: 200 });
