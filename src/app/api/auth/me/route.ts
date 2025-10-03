@@ -1,7 +1,9 @@
+//src/app/api/auth/me/route.ts
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/user";
-import { verifyJWT } from "@/lib/utils";
+import { verifyJWT } from "@/lib/jwt";
 import { cookies } from "next/headers";
 
 export async function GET(req: Request) {

@@ -1,36 +1,47 @@
 import { NextResponse } from "next/server";
+import { CourseContent } from "@/models/courseContent";
+import { UserProgress } from "@/models/userProgress";
 import { connectDB } from "@/lib/db";
-import News from "@/models/news";
+import { getAuthData } from "@/lib/auth";
+import { UserPayload } from "@/types/auth";
 
 export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
+  req: Request,
+  { params }: { params: { courseId?: string } },
 ) {
-  try {
-    await connectDB();
+  await connectDB();
 
-    const { id } = await context.params; // ✅ tunggu params
-    const berita = await News.findById(id);
+  const { user } = await getAuthData();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!berita) {
-      return NextResponse.json(
-        { error: "Berita tidak ditemukan." },
-        { status: 404 },
-      );
-    }
+  const courseId = params.courseId;
+  if (!courseId) {
+    return NextResponse.json({ error: "courseId required" }, { status: 400 });
+  }
 
-    // findById hasilnya cuma 1 dokumen, bukan array
-    const beritaWithImage = {
-      ...berita.toObject(),
-      gambar: berita.gambar ? berita.gambar : null,
-      gambarType: berita.gambarType || null,
-    };
-
-    return NextResponse.json(beritaWithImage, { status: 200 });
-  } catch (error: any) {
+  if (!/^[0-9a-fA-F]{24}$/.test(courseId)) {
     return NextResponse.json(
-      { error: "Gagal mengambil detail berita." },
-      { status: 500 },
+      { error: "Invalid courseId format" },
+      { status: 400 },
     );
   }
+
+  const totalContent = await CourseContent.countDocuments({ courseId });
+  const completed = await UserProgress.countDocuments({
+    userId: user.id, // ✅ konsisten dengan payload
+    isCompleted: true,
+    courseId,
+  });
+
+  const progress = totalContent > 0 ? (completed / totalContent) * 100 : 0;
+
+  return NextResponse.json({
+    courseId,
+    userId: user.id, // ✅ pakai id, bukan _id
+    progress,
+    completed,
+    total: totalContent,
+  });
 }

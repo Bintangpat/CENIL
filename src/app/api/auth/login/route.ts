@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/user";
 import { cookies } from "next/headers";
-import { comparePassword, signJWT } from "@/lib/utils";
+import { comparePassword } from "@/lib/utils";
+import { signJWT } from "@/lib/jwt";
 import { cookieOptions } from "@/lib/CookieOptions";
 
 export async function POST(req: Request) {
@@ -34,13 +35,12 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
+
     console.log("Creating token for user:", user.email);
     const token = await signJWT({
-      name: user.name,
       id: user._id,
       email: user.email,
       role: user.role,
-      phonenumber: user.phonenumber,
     });
 
     // Buat respons sukses dan tambahkan cookie httpOnly

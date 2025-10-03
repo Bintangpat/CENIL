@@ -1,22 +1,16 @@
-// //src/app/
-// import { jwtDecode } from "jwt-decode";
+import jwt from "jsonwebtoken";
+import { UserPayload } from "@/types/auth";
 
-// // Struktur payload user di token
-// export type UserPayload = {
-//   id: string;
-//   name?: string;
-//   email: string;
-//   role: string;
-//   phonenumber: string;
-//   iat?: number; // issued at
-//   exp?: number; // expired at
-// };
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
-// export function decodeToken(token: string): UserPayload | null {
-//   try {
-//     return jwtDecode<UserPayload>(token);
-//   } catch (err) {
-//     console.error("Failed to decode token:", err);
-//     return null;
-//   }
-// }
+export function signJWT(payload: UserPayload): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+}
+
+export function verifyJWT(token: string): UserPayload | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as UserPayload;
+  } catch {
+    return null;
+  }
+}

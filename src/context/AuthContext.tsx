@@ -1,72 +1,75 @@
+// src/context/AuthContext.tsx
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import type { UserPayload } from "@/types/auth"; // hanya id, email, role
 
-interface User {
-  id: string;
+interface FullUser extends UserPayload {
   name: string;
-  role: string;
-  email: string;
+  phonenumber?: string;
 }
 
 interface AuthContextProps {
-  user: User | null;
+  user: FullUser | null;
   loading: boolean;
-  setUser: (user: User | null) => void;
+  setUser: (user: FullUser | null) => void;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider = ({
   children,
-  initialUser,
+  initialUser, // payload dari server (id, email, role)
 }: {
   children: React.ReactNode;
-  initialUser?: User | null;
+  initialUser: UserPayload | null;
 }) => {
-  const [user, setUser] = useState<User | null>(initialUser ?? null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [user, setUser] = useState<FullUser | null>(
+    initialUser ? { ...initialUser, name: "" } : null,
+  );
 
-  const logout = async () => {
-    setLoading(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-      router.push("/");
-    } catch (err) {
-      console.error("Gagal logout", err);
-    } finally {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          // merge payload (id/email/role) dengan data lengkap dari server
+          setUser((prev) => ({ ...prev, ...data.user }));
+        }
+      } catch (err) {
+        console.error("Gagal fetch user", err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // hanya fetch kalau ada initialUser (berarti sudah login)
+    if (initialUser) {
+      fetchUser();
+    } else {
       setLoading(false);
     }
-  };
+  }, [initialUser]);
 
-  const refresh = async () => {
-    try {
-      const res = await fetch("/api/auth/refresh", { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Access token diperbarui:", data.accessToken);
-      }
-    } catch (err) {
-      console.error("Gagal refresh token", err);
-    }
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 };

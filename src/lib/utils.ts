@@ -2,9 +2,7 @@
 
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -19,16 +17,4 @@ export async function hashPassword(password: string) {
 
 export async function comparePassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
-}
-
-export function signJWT(payload: object) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
-}
-
-export function verifyJWT(token: string) {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch {
-    return null;
-  }
 }
