@@ -1,17 +1,34 @@
-// src/models/userProgress.ts
-import mongoose, { Schema, models } from "mongoose";
+// models/UserProgress.ts
+import mongoose, { Schema, Document } from "mongoose";
 
-const userProgressSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  contentId: {
-    type: Schema.Types.ObjectId,
-    ref: "CourseContent",
-    required: true,
+export interface IUserProgress extends Document {
+  userId: mongoose.Types.ObjectId;
+  courseId: mongoose.Types.ObjectId;
+  contentId: mongoose.Types.ObjectId;
+  status: "not_started" | "in_progress" | "completed";
+  completedAt?: Date;
+}
+
+const UserProgressSchema = new Schema<IUserProgress>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    contentId: {
+      type: Schema.Types.ObjectId,
+      ref: "CourseContent",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["not_started", "in_progress", "completed"],
+      default: "not_started",
+    },
+    completedAt: { type: Date },
   },
-  isCompleted: { type: Boolean, default: false },
-  completedAt: { type: Date },
-  courseId: { type: Schema.Types.ObjectId, ref: "Course" }, // ✅ tambahkan courseId biar query by course gampang
-});
+  { timestamps: true },
+);
 
-export const UserProgress =
-  models.UserProgress || mongoose.model("UserProgress", userProgressSchema);
+UserProgressSchema.index({ userId: 1, contentId: 1 }, { unique: true });
+
+export default mongoose.models.UserProgress ||
+  mongoose.model<IUserProgress>("UserProgress", UserProgressSchema);

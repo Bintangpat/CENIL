@@ -1,40 +1,88 @@
-//srv/app/api/progress/route.ts
-
+// src/app/api/progress/route.ts
 import { NextResponse } from "next/server";
-import { connectDB as dbConnect } from "@/lib/db";
-import { UserProgress } from "@/models/userProgress";
+import mongoose from "mongoose";
+import { connectDB } from "@/lib/db";
 import { getAuthData } from "@/lib/auth";
+import Course from "@/models/course";
+import CourseContent from "@/models/courseContent";
 
 export async function GET() {
-  await dbConnect();
-  try {
-    const { user } = await getAuthData();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  await connectDB();
 
-    const progresses = await UserProgress.aggregate([
-      { $match: { userId: user.id } },
+  const { user, error } = await getAuthData();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    // Aggregate per Course: total contents & completed by this user
+    const objectUserId = new mongoose.Types.ObjectId(user.id);
+
+    const pipeline = [
+      // Start from Course collection
       {
-        $group: {
-          _id: "$courseId",
-          completed: { $sum: { $cond: ["$isCompleted", 1, 0] } },
-          total: { $sum: 1 },
+        $lookup: {
+          from: "coursecontents",
+          localField: "_id",
+          foreignField: "courseId",
+          as: "contents",
+        },
+      },
+      {
+        $addFields: {
+          total: { $size: "$contents" },
+        },
+      },
+      // Lookup completed user progress for this course
+      {
+        $lookup: {
+          from: "userprogresses",
+          let: { courseId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$courseId", "$$courseId"] },
+                    { $eq: ["$userId", objectUserId] },
+                    { $eq: ["$isCompleted", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "userCompleted",
+        },
+      },
+      {
+        $addFields: {
+          completed: { $size: "$userCompleted" },
         },
       },
       {
         $project: {
-          courseId: "$_id",
-          completed: 1,
-          total: 1,
           _id: 0,
+          courseId: { $toString: "$_id" },
+          title: "$title",
+          description: "$description",
+          total: 1,
+          completed: 1,
+          progress: {
+            $cond: [
+              { $gt: ["$total", 0] },
+              { $multiply: [{ $divide: ["$completed", "$total"] }, 100] },
+              0,
+            ],
+          },
         },
       },
-    ]);
+    ];
 
-    return NextResponse.json(progresses);
-  } catch (error) {
-    console.error(error);
+    const rows = await Course.aggregate(pipeline);
+
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error("GET /api/progress error:", err);
     return NextResponse.json([], { status: 500 });
   }
 }

@@ -1,13 +1,14 @@
 // src/app/api/progress/content/[contentId]/route.ts
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import { UserProgress } from "@/models/userProgress";
-import { getAuthData } from "@/lib/auth";
 import mongoose from "mongoose";
+import { connectDB } from "@/lib/db";
+import { getAuthData } from "@/lib/auth";
+import UserProgress from "@/models/userProgress";
+import CourseContent from "@/models/courseContent";
 
 export async function PUT(
   req: Request,
-  context: { params: { contentId: string } },
+  context: { params: Promise<{ contentId: string }> }, // ✅ params harus async
 ) {
   await connectDB();
 
@@ -16,40 +17,42 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // ✅ tunggu params sebelum menggunakannya
+  // ✅ tunggu params
   const { contentId } = await context.params;
+  if (!contentId || !/^[0-9a-fA-F]{24}$/.test(contentId)) {
+    return NextResponse.json({ error: "Invalid contentId" }, { status: 400 });
+  }
+
+  const body = await req.json();
 
   try {
+    // pastikan contentId valid di CourseContent
+    const content = await CourseContent.findById(contentId);
+    if (!content) {
+      return NextResponse.json(
+        { error: "Course content not found" },
+        { status: 404 },
+      );
+    }
+
+    // update progress untuk user ini
     const updated = await UserProgress.findOneAndUpdate(
       {
         contentId: new mongoose.Types.ObjectId(contentId),
         userId: new mongoose.Types.ObjectId(user.id),
       },
       {
-        isCompleted: true,
-        completedAt: new Date(),
+        isCompleted: body.isCompleted ?? true,
+        completedAt: body.isCompleted ? new Date() : null,
       },
-      { new: true },
+      { new: true, upsert: true }, // ✅ upsert biar kalau belum ada, dibuat
     );
 
-    if (!updated) {
-      return NextResponse.json(
-        { error: "Progress not found" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({
-      id: String(updated._id),
-      courseId: String(updated.courseId),
-      contentId: String(updated.contentId),
-      isCompleted: updated.isCompleted,
-      completedAt: updated.completedAt,
-    });
+    return NextResponse.json(updated, { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error("PUT /progress/content error:", err);
     return NextResponse.json(
-      { error: "Failed to update progress" },
+      { error: "Internal Server Error" },
       { status: 500 },
     );
   }

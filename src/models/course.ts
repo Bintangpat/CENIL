@@ -1,10 +1,20 @@
-// src/models/course.ts
-import mongoose, { Schema, models } from "mongoose";
+// models/Course.ts
+import mongoose, { Schema, Document } from "mongoose";
 
-const courseSchema = new Schema({
-  title: { type: String, required: true },
-  description: { type: String },
-  createdAt: { type: Date, default: Date.now },
-});
+export interface ICourse extends Document {
+  title: string;
+  description: string;
+  contents: mongoose.Types.ObjectId[]; // relasi ke CourseContent
+}
 
-export const Course = models.Course || mongoose.model("Course", courseSchema);
+const CourseSchema = new Schema<ICourse>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    contents: [{ type: Schema.Types.ObjectId, ref: "CourseContent" }],
+  },
+  { timestamps: true },
+);
+
+export default mongoose.models.Course ||
+  mongoose.model<ICourse>("Course", CourseSchema);

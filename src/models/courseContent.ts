@@ -1,11 +1,26 @@
-// src/models/courseContent.ts
-import mongoose, { Schema, models } from "mongoose";
+// models/CourseContent.ts
+import mongoose, { Schema, Document } from "mongoose";
 
-const courseContentSchema = new Schema({
-  title: { type: String, required: true },
-  type: { type: String, enum: ["video", "quiz", "article"], required: true },
-  courseId: { type: Schema.Types.ObjectId, ref: "Course" },
-});
+export interface ICourseContent extends Document {
+  courseId: mongoose.Types.ObjectId;
+  title: string;
+  type: "video" | "article" | "quiz"; // opsional
+  order: number; // urutan dalam course
+}
 
-export const CourseContent =
-  models.CourseContent || mongoose.model("CourseContent", courseContentSchema);
+const CourseContentSchema = new Schema<ICourseContent>(
+  {
+    courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    title: { type: String, required: true },
+    type: {
+      type: String,
+      enum: ["video", "article", "quiz"],
+      default: "article",
+    },
+    order: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+
+export default mongoose.models.CourseContent ||
+  mongoose.model<ICourseContent>("CourseContent", CourseContentSchema);

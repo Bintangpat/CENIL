@@ -52,7 +52,7 @@ export default function LoginPage() {
       <div className="flex w-full flex-col items-start">
         <div className="flex flex-col gap-3">
           <h2 className="text-accent-foreground mb-2 w-full text-left text-5xl font-normal">
-            Selamat Datang Di Ecomerce
+            Selamat Datang Di CENIL
           </h2>
           <p className="text-accent-foreground mb-10 text-sm">
             Aplikasi yang siap sedia menerima laporan mu

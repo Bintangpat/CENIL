@@ -1,7 +1,7 @@
 // src/app/api/courses/route.ts
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { CourseContent } from "@/models/courseContent";
+import CourseContent from "@/models/courseContent";
 
 export async function GET() {
   await connectDB();

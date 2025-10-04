@@ -1,72 +1,85 @@
-//src/components/card/cardcourse.tsx
-
 "use client";
-
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
+import CardContent from "./cardcontent";
 
 interface CardCourseProps {
-  courseTitle: string;
-  completed: number;
-  total: number;
   courseId: string;
-  contentIdList: string[];
-  onProgressUpdate?: () => void; // callback setelah update
+  title: string;
+  description: string;
+  total: number;
+  completed: number;
 }
 
-export default function CardProgress({
-  courseTitle,
-  completed,
+interface CourseContent {
+  _id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
+export default function CardCourse({
+  courseId,
+  title,
+  description,
   total,
-  contentIdList,
-  onProgressUpdate,
+  completed,
 }: CardCourseProps) {
-  const [localCompleted, setLocalCompleted] = useState(completed);
+  const [contents, setContents] = useState<CourseContent[]>([]);
 
-  const percentage = total > 0 ? (localCompleted / total) * 100 : 0;
+  useEffect(() => {
+    const fetchContents = async () => {
+      try {
+        const res = await fetch(`/api/progress/course/${courseId}`);
+        const data = await res.json();
+        // jika API mengembalikan { courseId, contents: [...] }
+        setContents(Array.isArray(data.contents) ? data.contents : []);
+      } catch (err) {
+        console.error("Failed to fetch course contents:", err);
+        setContents([]);
+      }
+    };
+    fetchContents();
+  }, [courseId]);
 
-  const markComplete = async (contentId: string) => {
+  const handleComplete = async (contentId: string) => {
     try {
-      const res = await fetch(`/api/progress/course/${contentId}`, {
-        method: "GET",
+      const res = await fetch(`/api/progress/content/${contentId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isCompleted: true }),
       });
 
-      if (res.ok) {
-        setLocalCompleted((prev) => prev + 1);
-        onProgressUpdate?.();
-      } else {
-        console.error("Failed to update progress", await res.json());
-      }
+      if (!res.ok) throw new Error("Failed to update progress");
+
+      // Update state lokal
+      setContents((prev) =>
+        prev.map((c) =>
+          c._id === contentId ? { ...c, isCompleted: true } : c,
+        ),
+      );
     } catch (err) {
-      console.error("Failed to update progress:", err);
+      console.error(err);
     }
   };
 
   return (
-    <Card className="rounded-lg p-4 shadow-md">
-      <CardHeader>
-        <CardTitle>{courseTitle}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-muted-foreground mb-2 text-sm">
-          Progress: {localCompleted} / {total}
-        </div>
-        <Progress value={percentage} className="mb-4" />
-        <div className="flex flex-wrap gap-2">
-          {contentIdList.map((id) => (
-            <button
-              key={id}
-              onClick={() => markComplete(id)}
-              className="rounded bg-indigo-500 px-2 py-1 text-white hover:bg-indigo-600"
-            >
-              Tandai selesai ({id.slice(-4)})
-            </button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4 rounded-xl border bg-white p-6 shadow-md">
+      <h2 className="text-lg font-bold">{title}</h2>
+      <p className="text-sm text-gray-600">{description}</p>
+      <p className="text-sm font-medium">
+        Progress: {contents.filter((c) => c.isCompleted).length}/{total}
+      </p>
+
+      <div className="w-fit space-y-3">
+        {contents.map((content) => (
+          <CardContent
+            key={content._id}
+            contentId={content._id}
+            title={content.title}
+            completed={content.isCompleted}
+            onComplete={handleComplete}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,19 +1,22 @@
-import { ObjectId } from "mongoose";
+"use client";
+
 import { Button } from "../ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 export type CardReportProps = {
-  _id: ObjectId;
+  _id: string;
   role: string;
   judul: string;
   penulis: string;
   deskripsi: string;
   isi: string;
-  gambar?: string;
+  gambar?: string | null;
   lokasi: string;
   gmapsLink: string;
+  status?: string; // tambahkan status
 };
 
 export function CardReport({
@@ -22,14 +25,44 @@ export function CardReport({
   penulis,
   isi,
   gambar,
-  lokasi,
   gmapsLink,
+  status = "belum_dibaca",
 }: CardReportProps) {
   const { user } = useAuth();
+  const [currentStatus, setCurrentStatus] = useState(status);
+  const [loading, setLoading] = useState(false);
+
+  async function handleStatusChange(newStatus: string) {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/report/${_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        console.error("Gagal update status");
+        return;
+      }
+
+      const data = await res.json();
+      setCurrentStatus(data.status);
+      console.log("Status berhasil diubah:", data);
+    } catch (err) {
+      console.error("Error update status:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="bg-sidebar flex flex-col rounded-2xl">
+    <div className="bg-sidebar flex flex-col rounded-2xl shadow-sm">
       <div className="flex h-fit w-full flex-col gap-4 p-4 md:flex-row">
-        <div className="flex max-h-50 w-full min-w-50 flex-none flex-row overflow-hidden rounded-2xl md:w-1/5 md:max-w-60">
+        {/* Thumbnail / Image */}
+        <div className="flex max-h-50 w-full min-w-50 flex-none overflow-hidden rounded-2xl md:w-1/5 md:max-w-60">
           {gambar ? (
             <Image
               src={gambar}
@@ -45,27 +78,49 @@ export function CardReport({
             </div>
           )}
         </div>
+
+        {/* Konten */}
         <div className="flex w-full flex-1 flex-col md:w-4/5">
-          <h1 className="text-accent-foreground mb-2 h-fit max-h-20 w-auto truncate text-lg font-bold text-pretty md:text-2xl md:text-balance">
+          <h1 className="text-accent-foreground mb-2 line-clamp-2 text-lg font-bold md:text-2xl">
             {judul}
           </h1>
           <p className="text-accent-foreground mb-2 text-xs">
             Penulis • {penulis}
           </p>
-          <div className="mb-2 flex w-fit flex-row gap-4 text-sm">
-            <p>
-              <span></span>
+
+          <div className="mb-2 flex w-full flex-row gap-4 text-sm">
+            <p className="text-base font-medium">
+              Cek lokasi{" "}
+              <Link
+                href={gmapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                klik di sini
+              </Link>
             </p>
-            <Link href={gmapsLink}>
-              <p className="text-blue-500"> klik dinisi</p>
-            </Link>
           </div>
+
+          {/* Dropdown Status */}
+          <div className="mb-3">
+            <label className="mr-2 text-sm font-medium">Status:</label>
+            <select
+              value={currentStatus}
+              disabled={loading}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="rounded-md border px-2 py-1 text-sm"
+            >
+              <option value="belum_dibaca">Belum Dibaca</option>
+              <option value="proses">Proses</option>
+              <option value="selesai">Selesai</option>
+            </select>
+          </div>
+
           <div className="flex h-fit flex-col gap-4">
-            <p className="text-accent-foreground h-15 w-full truncate text-xs text-pretty text-ellipsis md:text-balance">
-              {isi}
-            </p>
+            <p className="text-accent-foreground line-clamp-3 text-sm">{isi}</p>
             <Link href={`/${user?.role}/news/${_id}`}>
-              <Button variant="outline" className="h-full w-full">
+              <Button variant="outline" className="w-full">
                 Baca berita
               </Button>
             </Link>

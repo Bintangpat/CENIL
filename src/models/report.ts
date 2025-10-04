@@ -27,7 +27,11 @@ const ReportSchema = new Schema<ILaporan>({
   gmapsLink: { type: String, required: true },
   gambarType: { type: String },
   createdAt: { type: Date, default: Date.now },
-  status: { type: String, enum: ["unread", "pending", "done"], required: true },
+  status: {
+    type: String,
+    enum: ["belum dibaca", "dalam proses", "selesai"],
+    required: true,
+  },
   updatedAt: { type: Date, required: true },
   isDeleted: { type: Boolean, required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: "user", requirerd: true },

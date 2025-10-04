@@ -1,35 +1,78 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import News from "@/models/report";
+import Report from "@/models/report";
 
+// GET detail laporan
 export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
+  req: Request,
+  { params }: { params: { id: string } },
 ) {
   try {
     await connectDB();
 
-    const { id } = await context.params; // ✅ tunggu params
-    const berita = await News.findById(id);
+    const { id } = params;
+    const laporan = await Report.findById(id);
 
-    if (!berita) {
+    if (!laporan) {
       return NextResponse.json(
-        { error: "Berita tidak ditemukan." },
+        { error: "Laporan tidak ditemukan." },
         { status: 404 },
       );
     }
 
-    // findById hasilnya cuma 1 dokumen, bukan array
-    const beritaWithImage = {
-      ...berita.toObject(),
-      gambar: berita.gambar ? berita.gambar : null,
-      gambarType: berita.gambarType || null,
+    const laporanWithImage = {
+      ...laporan.toObject(),
+      gambar: laporan.gambar ? laporan.gambar : null,
+      gambarType: laporan.gambarType || null,
     };
 
-    return NextResponse.json(beritaWithImage, { status: 200 });
-  } catch (error: any) {
+    return NextResponse.json(laporanWithImage, { status: 200 });
+  } catch (error) {
     return NextResponse.json(
-      { error: "Gagal mengambil detail berita." },
+      { error: "Gagal mengambil detail laporan." },
+      { status: 500 },
+    );
+  }
+}
+
+// PUT update status laporan
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
+  try {
+    await connectDB();
+    const { id } = params;
+
+    const body = await req.json();
+    const { status } = body;
+
+    // validasi status
+    const allowedStatus = ["belum dibaca", "dalam proses", "selesai"];
+    if (!status || !allowedStatus.includes(status)) {
+      return NextResponse.json(
+        { error: "Status tidak valid." },
+        { status: 400 },
+      );
+    }
+
+    const updated = await Report.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true },
+    );
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Laporan tidak ditemukan." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(updated, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Gagal mengubah status laporan." },
       { status: 500 },
     );
   }
